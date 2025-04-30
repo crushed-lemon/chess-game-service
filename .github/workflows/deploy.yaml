@@ -58,7 +58,7 @@ jobs:
             --query "taskDefinition" > task_def.json
 
       - name: Debug new task definition
-        run: cat new_task_def.json
+        run: cat task_def.json
 
       - name: Register new task definition with updated image
         run: |
@@ -68,6 +68,8 @@ jobs:
             '.containerDefinitions[0].image = $IMAGE |
              { family, networkMode, containerDefinitions, requiresCompatibilities, cpu, memory }' \
             task_def.json > new_task_def.json
+
+          cat task_def.json
 
           aws ecs register-task-definition --cli-input-json file://new_task_def.json \
             --query "taskDefinition.taskDefinitionArn" --output text > new_task_def_arn.txt
