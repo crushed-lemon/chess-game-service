@@ -1,0 +1,64 @@
+name: Deploy to Fargate
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  AWS_REGION: eu-north-1
+  ECR_REPOSITORY: chess-game-service-registry
+  ECS_CLUSTER_NAME: ChessGameProdCluster
+  ECS_SERVICE_NAME: chess-game-service-task-service-vepx2sul
+  CONTAINER_NAME: chess-game-service-container
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Build app with Maven
+        run: mvn clean package -DskipTests
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-north-1
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Build and push Docker image
+        run: |
+          IMAGE_TAG=$(date +%s)
+          IMAGE_URI="${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:$IMAGE_TAG"
+          docker build -t $IMAGE_URI .
+          docker push $IMAGE_URI
+          echo "IMAGE_URI=$IMAGE_URI" >> $GITHUB_ENV
+
+      - name: Update ECS service
+        uses: aws-actions/amazon-ecs-update-service@v1
+        with:
+          cluster: ${{ env.ECS_CLUSTER_NAME }}
+          service: ${{ env.ECS_SERVICE_NAME }}
+          force-new-deployment: true
+          task-definition: |
+            family: ${{ env.ECS_SERVICE_NAME }}
+            containerDefinitions:
+              - name: ${{ env.CONTAINER_NAME }}
+                image: ${{ env.IMAGE_URI }}
+                essential: true
+                portMappings:
+                  - containerPort: 8080
