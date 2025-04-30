@@ -25,7 +25,7 @@ public class ChessGameController {
     @PostMapping("/")
     public ResponseEntity<String> handleWebSocketMessage(@RequestBody Map<String, Object> payload) {
 
-        logger.atInfo().log("The API endpoint was hit");
+        logger.atInfo().log(String.format("The API endpoint was hit, with payload %s", payload));
 
         // Extract the actual WebSocket message
         String bodyJson = (String) payload.get("body");
