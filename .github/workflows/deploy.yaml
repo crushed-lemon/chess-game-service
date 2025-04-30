@@ -57,6 +57,9 @@ jobs:
           aws ecs describe-task-definition --task-definition $TASK_DEF_ARN \
             --query "taskDefinition" > task_def.json
 
+      - name: Debug new task definition
+        run: cat new_task_def.json
+
       - name: Register new task definition with updated image
         run: |
           NEW_IMAGE=$IMAGE_URI
