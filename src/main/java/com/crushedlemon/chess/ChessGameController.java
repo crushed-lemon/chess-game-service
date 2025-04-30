@@ -22,7 +22,7 @@ public class ChessGameController {
         return "Hello";
     }
 
-    @PostMapping("/")
+    @PostMapping("/movePiece")
     public ResponseEntity<String> handleWebSocketMessage(@RequestBody Map<String, Object> payload) {
 
         logger.atInfo().log(String.format("The API endpoint was hit, with payload %s", payload));
