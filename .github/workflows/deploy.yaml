@@ -64,9 +64,9 @@ jobs:
         run: |
           NEW_IMAGE=$IMAGE_URI
           jq --arg IMAGE "$NEW_IMAGE" \
-          --arg ROLE_ARN "arn:aws:iam::610596007825:role/ecsTaskExecutionRole" \
+            --arg ROLE_ARN "arn:aws:iam::610596007825:role/ecsTaskExecutionRole" \
             '.containerDefinitions[0].image = $IMAGE |
-             { family, networkMode, containerDefinitions, requiresCompatibilities, cpu, memory }' \
+             { family, executionRoleArn, networkMode, containerDefinitions, requiresCompatibilities, cpu, memory }' \
             task_def.json > new_task_def.json
 
           cat task_def.json
