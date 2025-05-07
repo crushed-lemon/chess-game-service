@@ -21,6 +21,8 @@ import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.util.List;
 
+import static com.crushedlemon.chess.utils.CommonUtils.isPawn;
+
 @Service
 public class ChessServiceImpl implements ChessService {
 
@@ -42,9 +44,6 @@ public class ChessServiceImpl implements ChessService {
 
         Game game = chessRepository.getGame(gameId);
 
-        logger.atInfo().log("Game Id : " + game.getGameId());
-        logger.atInfo().log("Game : " + game);
-
         boolean isAuthorized = playerAuthorizer.isPlayerAuthorized(game, move, player);
         if (!isAuthorized) {
             return OperationStatus.FAILED_UNAUTHORIZED;
@@ -60,7 +59,7 @@ public class ChessServiceImpl implements ChessService {
             Long moveTime = Instant.now().toEpochMilli();
             chessRepository.saveMove(gameId, move, moveName, moveTime);
 
-            Game modifiedGame = modifyGame(game, move, playMoveOutput, getMoveResultOutput);
+            Game modifiedGame = modifyGame(game, playMoveOutput, getMoveResultOutput);
             chessRepository.saveGame(modifiedGame);
         } catch (InvalidMoveException e) {
             operationStatus = OperationStatus.FAILED_INVALID_MOVE;
@@ -69,11 +68,23 @@ public class ChessServiceImpl implements ChessService {
         return operationStatus;
     }
 
-    private Game modifyGame(Game game, Move move, PlayMoveOutput playMoveOutput, GetMoveResultOutput getMoveResultOutput) {
-        return game;
+    private Game modifyGame(Game game, PlayMoveOutput playMoveOutput, GetMoveResultOutput getMoveResultOutput) {
+        // TODO : Incorporate result of getMoveResultOutput to fill in game state and winner fields
+        return game.toBuilder()
+                .board(playMoveOutput.getBoard())
+                .flags(playMoveOutput.getFlags())
+                .build();
     }
 
     private String buildMoveName(Move move, List<MoveResult> moveResults) {
-        return "exc5";
+        // TODO : Implement this method to handle checks, checkmates, captures, and disambiguation
+        StringBuilder moveNameBuilder = new StringBuilder();
+        String firstChar = move.getMovedPiece().toString().toUpperCase();
+        if (isPawn(move.getMovedPiece())) {
+            firstChar = "";
+        }
+        moveNameBuilder.append(firstChar);
+        moveNameBuilder.append(move.getEndingSquare());
+        return moveNameBuilder.toString();
     }
 }
