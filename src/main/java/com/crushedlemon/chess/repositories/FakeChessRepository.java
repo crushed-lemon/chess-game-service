@@ -2,9 +2,7 @@ package com.crushedlemon.chess.repositories;
 
 import com.crushedlemon.chess.commons.model.Game;
 import com.crushedlemon.chess.commons.model.Move;
-import org.springframework.stereotype.Repository;
 
-@Repository
 public class FakeChessRepository implements ChessRepository {
 
     @Override
