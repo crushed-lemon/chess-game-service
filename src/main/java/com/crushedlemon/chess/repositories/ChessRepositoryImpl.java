@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
 import java.util.Arrays;
 
 @Repository
@@ -30,8 +31,8 @@ public class ChessRepositoryImpl implements ChessRepository {
         Item item = chessGamesTable.getItem("gameId", gameId);
 
         String boardPieces = (String) item.get("board");
-        Integer gameDurationInt = (Integer) item.get("gameDuration");
-        Integer incrementPerMoveInt = (Integer) item.get("incrementPerMove");
+        Integer gameDurationInt = ((BigDecimal) item.get("gameDuration")).intValueExact();
+        Integer incrementPerMoveInt = ((BigDecimal) item.get("incrementPerMove")).intValueExact();
 
         GameDuration gameDuration = fromGameDurationValue(gameDurationInt);
         IncrementPerMove incrementPerMove = fromIncrementValue(incrementPerMoveInt);
@@ -45,8 +46,8 @@ public class ChessRepositoryImpl implements ChessRepository {
                 .blackConnectionId((String) item.get("blackConnectionId"))
                 .whiteConnectionId((String) item.get("whiteConnectionId"))
                 .gameState(GameState.valueOf((String) item.get("gameState")))
-                .startTime((Long) item.get("startTime"))
-                .flags((Integer) item.get("flags"))
+                .startTime(((BigDecimal) item.get("startTime")).longValueExact())
+                .flags(((BigDecimal) item.get("flags")).intValueExact())
                 .gameType(GameType.valueOf((String) item.get("gameType")))
                 .gameResult(GameResult.valueOf((String) item.get("gameResult")))
                 .winnerId((String) item.get("winnerId"))

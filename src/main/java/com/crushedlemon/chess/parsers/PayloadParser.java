@@ -13,8 +13,6 @@ public class PayloadParser {
     public static final ObjectMapper objectMapper = new ObjectMapper();
 
     public static Move parseMove(Map<String, Object> payload) {
-        //return Move.builder().movedPiece(Piece.N).playerColor(Color.W).startingSquare("b1").endingSquare("c3").build();
-
         return objectMapper.convertValue((Map<String, Object>) payload.get("move"), Move.class);
     }
 }

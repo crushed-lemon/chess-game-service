@@ -5,8 +5,11 @@ import com.crushedlemon.chess.dto.GetMoveResultInput;
 import com.crushedlemon.chess.dto.GetMoveResultOutput;
 import com.crushedlemon.chess.dto.PlayMoveInput;
 import com.crushedlemon.chess.dto.PlayMoveOutput;
+import com.crushedlemon.chess.enums.MoveResult;
 import com.crushedlemon.chess.exception.InvalidMoveException;
 import lombok.AllArgsConstructor;
+
+import java.util.List;
 
 import static com.crushedlemon.chess.utils.CastleUtils.populateCastlingRights;
 import static com.crushedlemon.chess.utils.EnPassantUtils.populateEnPassant;
@@ -46,7 +49,7 @@ public class ClassicRuleEngine implements RuleEngine {
 
     @Override
     public GetMoveResultOutput getMoveResult(GetMoveResultInput input) {
-        return null;
+        return new GetMoveResultOutput(List.of(MoveResult.NOTHING));
     }
 
     private void assertValidityOfMove() {
