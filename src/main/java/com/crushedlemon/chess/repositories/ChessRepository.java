@@ -9,5 +9,5 @@ public interface ChessRepository {
 
     void saveGame(Game game);
 
-    void saveMove(Move move, String moveName, Long moveTime);
+    void saveMove(String gameId, Move move, String moveName, Long moveTime);
 }

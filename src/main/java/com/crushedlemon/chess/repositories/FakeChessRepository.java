@@ -15,7 +15,7 @@ public class FakeChessRepository implements ChessRepository {
     }
 
     @Override
-    public void saveMove(Move move, String moveName, Long moveTime) {
+    public void saveMove(String gameId, Move move, String moveName, Long moveTime) {
 
     }
 }

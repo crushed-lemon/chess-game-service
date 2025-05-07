@@ -58,7 +58,7 @@ public class ChessServiceImpl implements ChessService {
 
             String moveName = buildMoveName(move, getMoveResultOutput.getMoveResults());
             Long moveTime = Instant.now().toEpochMilli();
-            chessRepository.saveMove(move, moveName, moveTime);
+            chessRepository.saveMove(gameId, move, moveName, moveTime);
 
             Game modifiedGame = modifyGame(game, move, playMoveOutput, getMoveResultOutput);
             chessRepository.saveGame(modifiedGame);

@@ -13,6 +13,7 @@ import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
 import java.util.Arrays;
+import java.util.Map;
 
 @Repository
 public class ChessRepositoryImpl implements ChessRepository {
@@ -56,12 +57,32 @@ public class ChessRepositoryImpl implements ChessRepository {
 
     @Override
     public void saveGame(Game game) {
-        logger.atInfo().log("Game is being saved now!");
+        Table gamesTable = dynamoDB.getTable("chess-games");
+        gamesTable.updateItem("gameId", game.getGameId(),
+                "SET #board = :board, #flags = :flags, #gameResult = :gameResult, #winnerId = :winnerId",
+                Map.of(
+                "#board", "board",
+                "#flags", "flags",
+                "#gameResult", "gameResult",
+                "#winnerId", "winnerId"),
+                Map.of(
+                ":board", game.getBoard().getPieces(),
+                ":flags", game.getFlags(),
+                ":gameResult", game.getGameResult().toString(),
+                ":winnerId", game.getWinnerId()));
     }
 
     @Override
-    public void saveMove(Move move, String moveName, Long moveTime) {
-        logger.atInfo().log("Move is being saved now!");
+    public void saveMove(String gameId, Move move, String moveName, Long moveTime) {
+        Table movesTable = dynamoDB.getTable("chess-game-moves");
+        Map<String, Object> mp = Map.of(
+                "gameId", gameId,
+                "moveTime", moveTime,
+                "movedPiece", move.getMovedPiece().toString(),
+                "startingSquare", move.getStartingSquare(),
+                "endingSquare", move.getEndingSquare(),
+                "moveName", moveName);
+        movesTable.putItem(Item.fromMap(mp));
     }
 
     private GameDuration fromGameDurationValue(Integer gameDurationInt) {
