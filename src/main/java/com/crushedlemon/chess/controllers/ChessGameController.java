@@ -28,7 +28,7 @@ public class ChessGameController {
             @RequestHeader Map<String, String> headers,
             HttpServletRequest request) {
 
-        logger.atInfo().log(String.format("The API endpoint was hit, with payload %s", payload));
+        logger.atInfo().log(String.format("API payload %s", payload));
         String userName = (String) payload.get("userName");
         Move move = PayloadParser.parseMove(payload);
         String gameId = (String) payload.get("gameId");
