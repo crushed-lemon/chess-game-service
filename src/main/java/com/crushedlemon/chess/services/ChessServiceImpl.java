@@ -12,7 +12,10 @@ import com.crushedlemon.chess.enums.MoveResult;
 import com.crushedlemon.chess.enums.OperationStatus;
 import com.crushedlemon.chess.exception.InvalidMoveException;
 import com.crushedlemon.chess.repositories.ChessRepository;
+import com.crushedlemon.chess.utils.CommsUtil;
 import com.crushedlemon.chess.validators.PlayerAuthorizer;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +23,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 
 import static com.crushedlemon.chess.utils.CommonUtils.isPawn;
 
@@ -36,6 +40,9 @@ public class ChessServiceImpl implements ChessService {
 
     @Autowired
     private RuleEngineFactory ruleEngineFactory;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @Override
     public OperationStatus playMove(String gameId, Move move, String player) {
@@ -61,11 +68,39 @@ public class ChessServiceImpl implements ChessService {
 
             Game modifiedGame = modifyGame(game, playMoveOutput, getMoveResultOutput);
             chessRepository.saveGame(modifiedGame);
+            sendCommunications(game, move, player, "success");
         } catch (InvalidMoveException e) {
             operationStatus = OperationStatus.FAILED_INVALID_MOVE;
+            sendCommunications(game, move, player, "failure");
         }
 
         return operationStatus;
+    }
+
+    // TODO : Move these methods out of this class. Also, make these comms asynchronous.
+    private void sendCommunications(Game game, Move move, String player, String status) {
+        String selfConnectionId = player.equals(game.getWhitePlayerId()) ? game.getWhiteConnectionId() : game.getBlackConnectionId();
+        String opponentConnectionId = player.equals(game.getWhitePlayerId()) ? game.getBlackConnectionId() : game.getWhiteConnectionId();
+        String message = getMoveMessage(move, status);
+        CommsUtil.communicateToClient(selfConnectionId, message);
+        if (status.equals("success")) {
+            CommsUtil.communicateToClient(opponentConnectionId, message);
+        }
+    }
+
+    private String getMoveMessage(Move move, String status) {
+        try {
+            String msg = status.equals("success") ? "" : status;
+            return objectMapper.writeValueAsString(Map.of(
+                "action", "selfPlayedMove",
+                "error", msg,
+                    "source", move.getStartingSquare(),
+                    "destination", move.getEndingSquare(),
+                    "piece", move.getMovedPiece().toString()
+                    ));
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private Game modifyGame(Game game, PlayMoveOutput playMoveOutput, GetMoveResultOutput getMoveResultOutput) {
