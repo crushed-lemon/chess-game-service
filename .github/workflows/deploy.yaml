@@ -26,6 +26,21 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
 
+      - name: Set up Maven
+        run: |
+          mkdir -p ~/.m2
+          echo "<settings> 
+                  <servers> 
+                    <server> 
+                      <id>github</id> 
+                      <username>crushed-lemon</username> 
+                      <password>${GITHUB_TOKEN}</password> 
+                    </server> 
+                  </servers> 
+                </settings>" > ~/.m2/settings.xml
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_PKG_PAT }}
+
       - name: Build app with Maven
         run: mvn clean package -DskipTests
 
