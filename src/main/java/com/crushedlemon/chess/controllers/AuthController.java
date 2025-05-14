@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -19,7 +20,15 @@ import java.util.Map;
 public class AuthController {
 
     private static final Logger logger = LoggerFactory.getLogger(AuthController.class);
-    private static final String TOKEN_ENDPOINT = "https://eu-north-1m7qbd8uy1.auth.eu-north-1.amazoncognito.com/oauth2/token";
+
+    @Value("${cognito.redirectUri}")
+    private String redirectUri;
+
+    @Value("${cognito.clientId}")
+    private String clientId;
+
+    @Value("${cognito.endpoint}")
+    private String endpoint;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -69,15 +78,15 @@ public class AuthController {
         MultiValueMap<String, String> tokenRequestBody = new LinkedMultiValueMap<>();
         tokenRequestBody.add("grant_type", "authorization_code");
         tokenRequestBody.add("code", code);
-        tokenRequestBody.add("redirect_uri", "http://localhost:3000/apps/chess/login-callback");
-        tokenRequestBody.add("client_id", "127nttui414onihc7vrt9dbf8i");
+        tokenRequestBody.add("redirect_uri", redirectUri);
+        tokenRequestBody.add("client_id", clientId);
         return tokenRequestBody;
     }
 
     private Map<String, String> hitTokenEndpoint(HttpEntity<MultiValueMap<String, String>> tokenRequest)
             throws JsonProcessingException {
         RestTemplate restTemplate = new RestTemplate();
-        ResponseEntity<String> tokenResponse = restTemplate.postForEntity(TOKEN_ENDPOINT, tokenRequest, String.class);
+        ResponseEntity<String> tokenResponse = restTemplate.postForEntity(endpoint, tokenRequest, String.class);
         Map<String, String> tokenResponseBody =
                 objectMapper.readValue(tokenResponse.getBody(), new TypeReference<Map<String, String>>() {});
         return tokenResponseBody;
