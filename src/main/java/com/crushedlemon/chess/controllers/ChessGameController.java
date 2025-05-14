@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
+// This is an intensely used Controller. Move this into its own separate infra.
 @RestController
 public class ChessGameController {
 
