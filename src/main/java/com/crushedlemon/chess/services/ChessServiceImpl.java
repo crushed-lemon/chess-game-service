@@ -16,6 +16,7 @@ import com.crushedlemon.chess.utils.CommsUtil;
 import com.crushedlemon.chess.validators.PlayerAuthorizer;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,10 +25,12 @@ import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static com.crushedlemon.chess.utils.CommonUtils.isPawn;
 
 @Service
+@Slf4j
 public class ChessServiceImpl implements ChessService {
 
     private static final Logger logger = LoggerFactory.getLogger(ChessServiceImpl.class);
@@ -49,10 +52,13 @@ public class ChessServiceImpl implements ChessService {
 
         // Go through README in this package to know the steps to take per move
 
+        log.info("Move played in game {} by {} : {}", gameId, player, move);
+
         Game game = chessRepository.getGame(gameId);
 
         boolean isAuthorized = playerAuthorizer.isPlayerAuthorized(game, move, player);
         if (!isAuthorized) {
+            log.info("Player {} is not authorized to move in game {}", player, gameId);
             return OperationStatus.FAILED_UNAUTHORIZED;
         }
 
@@ -62,13 +68,20 @@ public class ChessServiceImpl implements ChessService {
             PlayMoveOutput playMoveOutput = ruleEngine.playMove(new PlayMoveInput(game.getBoard(), move, game.getFlags()));
             GetMoveResultOutput getMoveResultOutput = ruleEngine.getMoveResult(new GetMoveResultInput(game.getBoard(), move));
 
+            log.info("PlayMoveOutput and GetMoveResultOutput computed successfully");
+
             String moveName = buildMoveName(move, getMoveResultOutput.getMoveResults());
             Long moveTime = Instant.now().toEpochMilli();
             chessRepository.saveMove(gameId, move, moveName, moveTime);
 
+            log.info("Move saved in repo");
+
             Game modifiedGame = modifyGame(game, playMoveOutput, getMoveResultOutput);
             chessRepository.saveGame(modifiedGame);
+            log.info("Updated game state saved in repo");
+
             sendCommunications(game, move, player, "success");
+            log.info("Communications sent");
         } catch (InvalidMoveException e) {
             operationStatus = OperationStatus.FAILED_INVALID_MOVE;
             sendCommunications(game, move, player, "failure");
@@ -79,12 +92,15 @@ public class ChessServiceImpl implements ChessService {
 
     // TODO : Move these methods out of this class. Also, make these comms asynchronous.
     private void sendCommunications(Game game, Move move, String player, String status) {
-        String selfConnectionId = player.equals(game.getWhitePlayerId()) ? game.getWhiteConnectionId() : game.getBlackConnectionId();
-        String opponentConnectionId = player.equals(game.getWhitePlayerId()) ? game.getBlackConnectionId() : game.getWhiteConnectionId();
+        Optional<String> selfConnectionId = chessRepository.getConnectionId(player);
+        String opponent = player.equals(game.getWhitePlayerId()) ? game.getBlackPlayerId() : game.getWhitePlayerId();
+        Optional<String> opponentConnectionId = chessRepository.getConnectionId(opponent);
+
         String message = getMoveMessage(move, status);
-        CommsUtil.communicateToClient(selfConnectionId, message);
+
+        selfConnectionId.ifPresent(s -> CommsUtil.communicateToClient(s, message));
         if (status.equals("success")) {
-            CommsUtil.communicateToClient(opponentConnectionId, message);
+            opponentConnectionId.ifPresent(s -> CommsUtil.communicateToClient(s, message));
         }
     }
 

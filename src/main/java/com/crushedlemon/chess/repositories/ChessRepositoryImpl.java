@@ -14,6 +14,8 @@ import org.springframework.stereotype.Repository;
 import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 
 @Repository
 public class ChessRepositoryImpl implements ChessRepository {
@@ -44,8 +46,8 @@ public class ChessRepositoryImpl implements ChessRepository {
                 .gameSettings(GameSettings.builder().gameDuration(gameDuration).incrementPerMove(incrementPerMove).build())
                 .blackPlayerId((String) item.get("blackUser"))
                 .whitePlayerId((String) item.get("whiteUser"))
-                .blackConnectionId((String) item.get("blackConnectionId"))
-                .whiteConnectionId((String) item.get("whiteConnectionId"))
+                //.blackConnectionId((String) item.get("blackConnectionId"))
+                //.whiteConnectionId((String) item.get("whiteConnectionId"))
                 .gameState(GameState.valueOf((String) item.get("gameState")))
                 .startTime(((BigDecimal) item.get("startTime")).longValueExact())
                 .flags(((BigDecimal) item.get("flags")).intValueExact())
@@ -83,6 +85,16 @@ public class ChessRepositoryImpl implements ChessRepository {
                 "endingSquare", move.getEndingSquare(),
                 "moveName", moveName);
         movesTable.putItem(Item.fromMap(mp));
+    }
+
+    @Override
+    public Optional<String> getConnectionId(String playerId) {
+        Table connectionsTable = dynamoDB.getTable("chess-connections");
+        Item item = connectionsTable.getItem("userId", playerId);
+        if(Objects.isNull(item)) {
+            return Optional.empty();
+        }
+        return Optional.of((String) item.get("connectionId"));
     }
 
     private GameDuration fromGameDurationValue(Integer gameDurationInt) {

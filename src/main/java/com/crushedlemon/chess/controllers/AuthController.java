@@ -3,8 +3,7 @@ package com.crushedlemon.chess.controllers;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
@@ -16,10 +15,9 @@ import org.springframework.web.client.RestTemplate;
 
 import java.util.Map;
 
+@Slf4j
 @RestController
 public class AuthController {
-
-    private static final Logger logger = LoggerFactory.getLogger(AuthController.class);
 
     @Value("${cognito.redirectUri}")
     private String redirectUri;
@@ -34,15 +32,18 @@ public class AuthController {
     private ObjectMapper objectMapper;
 
     @GetMapping("/whoami")
-    public ResponseEntity<String> me() {
-        // TODO : Based on the token present in cookie, determine the identity of user
-        return ResponseEntity.ok("");
+    public ResponseEntity<String> whoami(@CookieValue(name = "id_token", required = false) String token) {
+        log.atInfo().log("token = {}", token);
+        return ResponseEntity.ok("{\"logged_out\": true}");
+        // return ResponseEntity.ok("{\"email\": \"lemony@gmail.com\"}");
     }
 
     @PostMapping("/login-callback")
     public ResponseEntity<String> loginCallback(@RequestBody Map<String, Object> requestBody) {
 
         String code = (String) requestBody.get("code");
+
+        log.atInfo().log(code);
 
         if (code.isBlank()) {
             return ResponseEntity.ok("no code given");
@@ -60,7 +61,7 @@ public class AuthController {
             responseHeaders.add("Set-Cookie", String.format("id_token=%s; HttpOnly; SameSite=Strict", id_token));
             return new ResponseEntity<>("Login Successful", responseHeaders, HttpStatus.OK);
         } catch (Exception e) {
-            logger.atError().log("", e);
+            log.atError().log("", e);
             return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body("Credentials not valid");
         }
     }
@@ -86,9 +87,10 @@ public class AuthController {
     private Map<String, String> hitTokenEndpoint(HttpEntity<MultiValueMap<String, String>> tokenRequest)
             throws JsonProcessingException {
         RestTemplate restTemplate = new RestTemplate();
-        ResponseEntity<String> tokenResponse = restTemplate.postForEntity(endpoint, tokenRequest, String.class);
-        Map<String, String> tokenResponseBody =
+         ResponseEntity<String> tokenResponse = restTemplate.postForEntity(endpoint, tokenRequest, String.class);
+         Map<String, String> tokenResponseBody =
                 objectMapper.readValue(tokenResponse.getBody(), new TypeReference<Map<String, String>>() {});
-        return tokenResponseBody;
+         return tokenResponseBody;
+        //return Map.of("id_token", "xxx");
     }
 }
