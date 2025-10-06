@@ -3,6 +3,8 @@ package com.crushedlemon.chess.repositories;
 import com.crushedlemon.chess.commons.model.Game;
 import com.crushedlemon.chess.commons.model.Move;
 
+import java.util.Optional;
+
 public class FakeChessRepository implements ChessRepository {
 
     @Override
@@ -17,5 +19,10 @@ public class FakeChessRepository implements ChessRepository {
     @Override
     public void saveMove(String gameId, Move move, String moveName, Long moveTime) {
 
+    }
+
+    @Override
+    public Optional<String> getConnectionId(String playerId) {
+        return Optional.of("conn-id");
     }
 }
