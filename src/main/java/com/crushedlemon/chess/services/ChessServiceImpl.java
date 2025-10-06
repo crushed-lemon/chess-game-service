@@ -1,9 +1,8 @@
 package com.crushedlemon.chess.services;
 
+import com.crushedlemon.chess.commons.model.*;
 import com.crushedlemon.chess.engine.RuleEngine;
 import com.crushedlemon.chess.engine.RuleEngineFactory;
-import com.crushedlemon.chess.commons.model.Game;
-import com.crushedlemon.chess.commons.model.Move;
 import com.crushedlemon.chess.dto.GetMoveResultInput;
 import com.crushedlemon.chess.dto.GetMoveResultOutput;
 import com.crushedlemon.chess.dto.PlayMoveInput;
@@ -55,6 +54,9 @@ public class ChessServiceImpl implements ChessService {
         log.info("Move played in game {} by {} : {}", gameId, player, move);
 
         Game game = chessRepository.getGame(gameId);
+        if(game == null) {
+            return OperationStatus.FAILED_INVALID_MOVE;
+        }
 
         boolean isAuthorized = playerAuthorizer.isPlayerAuthorized(game, move, player);
         if (!isAuthorized) {
@@ -90,10 +92,41 @@ public class ChessServiceImpl implements ChessService {
         return operationStatus;
     }
 
+    @Override
+    public Optional<Game> getOngoingGame(String gameId) {
+        Game game = chessRepository.getGame(gameId);
+        if(game == null) {
+            return Optional.empty();
+        } else {
+            return Optional.of(game);
+        }
+    }
+
+    @Override
+    public void resign(String gameId, String userName) {
+        Game game = chessRepository.getGame(gameId);
+        Game modifiedGame = game.toBuilder()
+                .gameState(GameState.ENDED)
+                .gameResult(GameResult.GAME_RESULT_RESIGNED)
+                .winnerId(opponentOf(userName, game)).build();
+        chessRepository.saveGame(modifiedGame);
+        sendResignationCommunications(game, userName);
+    }
+
+    @Override
+    public Optional<GamePreferences> getOngoingLobbyRequest(String userName) {
+        return chessRepository.getLobby(userName);
+    }
+
+    @Override
+    public Optional<String> getOngoingGameId(String userName) {
+        return chessRepository.getGameId(userName);
+    }
+
     // TODO : Move these methods out of this class. Also, make these comms asynchronous.
     private void sendCommunications(Game game, Move move, String player, String status) {
         Optional<String> selfConnectionId = chessRepository.getConnectionId(player);
-        String opponent = player.equals(game.getWhitePlayerId()) ? game.getBlackPlayerId() : game.getWhitePlayerId();
+        String opponent = opponentOf(player, game);
         Optional<String> opponentConnectionId = chessRepository.getConnectionId(opponent);
 
         String message = getMoveMessage(move, status);
@@ -104,16 +137,38 @@ public class ChessServiceImpl implements ChessService {
         }
     }
 
+    private void sendResignationCommunications(Game game, String resigningPlayer) {
+        Optional<String> selfConnectionId = chessRepository.getConnectionId(resigningPlayer);
+        String opponent = opponentOf(resigningPlayer, game);
+        Optional<String> opponentConnectionId = chessRepository.getConnectionId(opponent);
+
+        String message = getResignationMessage(resigningPlayer);
+
+        selfConnectionId.ifPresent(s -> CommsUtil.communicateToClient(s, message));
+        opponentConnectionId.ifPresent(s -> CommsUtil.communicateToClient(s, message));
+    }
+
     private String getMoveMessage(Move move, String status) {
         try {
             String msg = status.equals("success") ? "" : status;
             return objectMapper.writeValueAsString(Map.of(
-                "action", "selfPlayedMove",
-                "error", msg,
+                    "action", "selfPlayedMove",
+                    "error", msg,
                     "source", move.getStartingSquare(),
                     "destination", move.getEndingSquare(),
                     "piece", move.getMovedPiece().toString()
-                    ));
+            ));
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private String getResignationMessage(String resigningPlayer) {
+        try {
+            return objectMapper.writeValueAsString(Map.of(
+                    "action", "resigned",
+                    "resigningPlayer", resigningPlayer
+            ));
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
@@ -137,5 +192,9 @@ public class ChessServiceImpl implements ChessService {
         moveNameBuilder.append(firstChar);
         moveNameBuilder.append(move.getEndingSquare());
         return moveNameBuilder.toString();
+    }
+
+    private String opponentOf(String userName, Game game) {
+        return game.getBlackPlayerId().equals(userName) ? game.getWhitePlayerId() : game.getBlackPlayerId();
     }
 }

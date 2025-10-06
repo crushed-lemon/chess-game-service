@@ -1,8 +1,8 @@
 package com.crushedlemon.chess.repositories;
 
-import com.amazonaws.services.dynamodbv2.document.DynamoDB;
-import com.amazonaws.services.dynamodbv2.document.Item;
-import com.amazonaws.services.dynamodbv2.document.Table;
+import com.amazonaws.services.dynamodbv2.document.*;
+import com.amazonaws.services.dynamodbv2.document.spec.QuerySpec;
+import com.amazonaws.services.dynamodbv2.document.utils.ValueMap;
 import com.crushedlemon.chess.commons.model.*;
 import com.crushedlemon.chess.exception.CorruptedDataException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -12,10 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
-import java.util.Arrays;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 
 @Repository
 public class ChessRepositoryImpl implements ChessRepository {
@@ -33,6 +30,10 @@ public class ChessRepositoryImpl implements ChessRepository {
         Table chessGamesTable = dynamoDB.getTable("chess-games");
         Item item = chessGamesTable.getItem("gameId", gameId);
 
+        if(Objects.isNull(item)) {
+            return null;
+        }
+
         String boardPieces = (String) item.get("board");
         Integer gameDurationInt = ((BigDecimal) item.get("gameDuration")).intValueExact();
         Integer incrementPerMoveInt = ((BigDecimal) item.get("incrementPerMove")).intValueExact();
@@ -46,8 +47,6 @@ public class ChessRepositoryImpl implements ChessRepository {
                 .gameSettings(GameSettings.builder().gameDuration(gameDuration).incrementPerMove(incrementPerMove).build())
                 .blackPlayerId((String) item.get("blackUser"))
                 .whitePlayerId((String) item.get("whiteUser"))
-                //.blackConnectionId((String) item.get("blackConnectionId"))
-                //.whiteConnectionId((String) item.get("whiteConnectionId"))
                 .gameState(GameState.valueOf((String) item.get("gameState")))
                 .startTime(((BigDecimal) item.get("startTime")).longValueExact())
                 .flags(((BigDecimal) item.get("flags")).intValueExact())
@@ -95,6 +94,68 @@ public class ChessRepositoryImpl implements ChessRepository {
             return Optional.empty();
         }
         return Optional.of((String) item.get("connectionId"));
+    }
+
+    @Override
+    public Optional<String> getGameId(String userName) {
+        Table gamesTable = dynamoDB.getTable("chess-games");
+        QuerySpec q = new QuerySpec()
+                .withKeyConditionExpression("whiteUser = :w AND gameState = :s")
+                .withValueMap(new ValueMap()
+                        .withString(":w", userName)
+                        .withString(":s", "ONGOING")
+                );
+        Iterator<Item> items = gamesTable.getIndex("whiteUser-gameState-index").query(q).iterator();
+
+        if(items.hasNext()) {
+            return Optional.of(items.next().getString("gameId"));
+        }
+
+        // Try with black
+        QuerySpec bq = new QuerySpec()
+                .withKeyConditionExpression("blackUser = :b AND gameState = :s")
+                .withValueMap(new ValueMap()
+                        .withString(":b", userName)
+                        .withString(":s", "ONGOING")
+                );
+        Iterator<Item> bItems = gamesTable.getIndex("blackUser-gameState-index").query(bq).iterator();
+
+        if(bItems.hasNext()) {
+            return Optional.of(bItems.next().getString("gameId"));
+        }
+
+        return Optional.empty();
+    }
+
+    @Override
+    public Optional<GamePreferences> getLobby(String userName) {
+        Table lobbyTable = dynamoDB.getTable("chess-lobby");
+        QuerySpec q = new QuerySpec()
+                .withKeyConditionExpression("userId = :u")
+                .withValueMap(new ValueMap()
+                        .withString(":u", userName)
+                );
+        Iterator<Item> items = lobbyTable.getIndex("userId-index").query(q).iterator();
+
+        if(items.hasNext()) {
+            Item item = items.next();
+            Integer gameDurationInt = ((BigDecimal) item.get("gameDuration")).intValueExact();
+            Integer incrementPerMoveInt = ((BigDecimal) item.get("incrementPerMove")).intValueExact();
+            String playAs = item.getString("playAs");
+
+            GameDuration gameDuration = fromGameDurationValue(gameDurationInt);
+            IncrementPerMove incrementPerMove = fromIncrementValue(incrementPerMoveInt);
+
+            return Optional.of(
+                    GamePreferences.builder()
+                            .gameDuration(gameDuration)
+                            .incrementPerMove(incrementPerMove)
+                            .playAs(PlayAs.valueOf(playAs))
+                            .build()
+            );
+        }
+
+        return Optional.empty();
     }
 
     private GameDuration fromGameDurationValue(Integer gameDurationInt) {
