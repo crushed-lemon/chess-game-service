@@ -32,8 +32,6 @@ import static com.crushedlemon.chess.utils.CommonUtils.isPawn;
 @Slf4j
 public class ChessServiceImpl implements ChessService {
 
-    private static final Logger logger = LoggerFactory.getLogger(ChessServiceImpl.class);
-
     @Autowired
     private ChessRepository chessRepository;
 
@@ -179,6 +177,7 @@ public class ChessServiceImpl implements ChessService {
         return game.toBuilder()
                 .board(playMoveOutput.getBoard())
                 .flags(playMoveOutput.getFlags())
+                .currentPlayer(1 - game.getCurrentPlayer())
                 .build();
     }
 

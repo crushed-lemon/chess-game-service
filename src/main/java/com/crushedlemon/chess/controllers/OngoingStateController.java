@@ -64,6 +64,7 @@ public class OngoingStateController {
         JsonObject response = new JsonObject();
         response.addProperty("board", game.get().getBoard().getPieces());
         response.addProperty("color", getColorForUser(username, game.get()));
+        response.addProperty("currentPlayer", game.get().getCurrentPlayer() == 0 ? "W" : "B");
 
         return ResponseEntity.ok(response.toString());
     }

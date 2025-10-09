@@ -47,10 +47,11 @@ public class ChessRepositoryImpl implements ChessRepository {
                 .gameSettings(GameSettings.builder().gameDuration(gameDuration).incrementPerMove(incrementPerMove).build())
                 .blackPlayerId((String) item.get("blackUser"))
                 .whitePlayerId((String) item.get("whiteUser"))
-                .gameState(GameState.valueOf((String) item.get("gameState")))
+                .currentPlayer(item.getInt("currentPlayer"))
                 .startTime(((BigDecimal) item.get("startTime")).longValueExact())
                 .flags(((BigDecimal) item.get("flags")).intValueExact())
                 .gameType(GameType.valueOf((String) item.get("gameType")))
+                .gameState(GameState.valueOf((String) item.get("gameState")))
                 .gameResult(GameResult.valueOf((String) item.get("gameResult")))
                 .winnerId((String) item.get("winnerId"))
                 .build();
@@ -60,15 +61,19 @@ public class ChessRepositoryImpl implements ChessRepository {
     public void saveGame(Game game) {
         Table gamesTable = dynamoDB.getTable("chess-games");
         gamesTable.updateItem("gameId", game.getGameId(),
-                "SET #board = :board, #flags = :flags, #gameResult = :gameResult, #winnerId = :winnerId",
+                "SET #board = :board, #flags = :flags, #currentPlayer = :currentPlayer, #gameState = :gameState, #gameResult = :gameResult, #winnerId = :winnerId",
                 Map.of(
                 "#board", "board",
                 "#flags", "flags",
+                "#currentPlayer", "currentPlayer",
+                "#gameState", "gameState",
                 "#gameResult", "gameResult",
                 "#winnerId", "winnerId"),
                 Map.of(
                 ":board", game.getBoard().getPieces(),
                 ":flags", game.getFlags(),
+                ":currentPlayer", game.getCurrentPlayer(),
+                ":gameState", game.getGameState().toString(),
                 ":gameResult", game.getGameResult().toString(),
                 ":winnerId", game.getWinnerId()));
     }
