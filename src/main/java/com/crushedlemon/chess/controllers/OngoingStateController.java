@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import com.google.gson.JsonObject;
 
 import java.util.Optional;
 
@@ -21,19 +22,28 @@ public class OngoingStateController {
     private ChessService chessService;
 
     @GetMapping("/ongoing-lobby")
-    ResponseEntity<Boolean> onGoingLobbyRequests(
+    ResponseEntity<String> onGoingLobbyRequests(
             @RequestParam(name = "username") String username) {
         Optional<GamePreferences> gamePreferences = chessService.getOngoingLobbyRequest(username);
 
-        return ResponseEntity.ok(gamePreferences.isPresent());
+        JsonObject response = new JsonObject();
+        response.addProperty("lobby", gamePreferences.isPresent());
+
+        return ResponseEntity.ok(response.toString());
     }
 
     @GetMapping("/ongoing-game-id")
     ResponseEntity<String> onGoingGameId(
             @RequestParam(name = "username") String username) {
         Optional<String> gameId = chessService.getOngoingGameId(username);
+        if(gameId.isEmpty()) {
+            return ResponseEntity.ok(null);
+        }
 
-        return gameId.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.ok(null));
+        JsonObject response = new JsonObject();
+        response.addProperty("gameId", gameId.get());
+
+        return ResponseEntity.ok(response.toString());
     }
 
     @GetMapping("/ongoing-game")
@@ -51,6 +61,18 @@ public class OngoingStateController {
                     String.format("%s is not allowed to access game id : %s", username, gameId));
         }
 
-        return ResponseEntity.ok(game.get().getBoard().getPieces());
+        JsonObject response = new JsonObject();
+        response.addProperty("board", game.get().getBoard().getPieces());
+        response.addProperty("color", getColorForUser(username, game.get()));
+
+        return ResponseEntity.ok(response.toString());
+    }
+
+    private String getColorForUser(String username, Game game) {
+        if(game.getWhitePlayerId().equals(username)) {
+            return "WHITE";
+        } else {
+            return "BLACK";
+        }
     }
 }
