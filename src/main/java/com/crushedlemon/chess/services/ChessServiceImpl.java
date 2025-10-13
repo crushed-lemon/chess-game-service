@@ -16,8 +16,6 @@ import com.crushedlemon.chess.validators.PlayerAuthorizer;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -44,6 +42,7 @@ public class ChessServiceImpl implements ChessService {
     @Autowired
     private ObjectMapper objectMapper;
 
+    // TODO : Get metrics about this API and restructure code/infra to minimize the latency of this API
     @Override
     public OperationStatus playMove(String gameId, Move move, String player) {
 
@@ -53,7 +52,7 @@ public class ChessServiceImpl implements ChessService {
 
         Game game = chessRepository.getGame(gameId);
         if(game == null) {
-            return OperationStatus.FAILED_INVALID_MOVE;
+            return OperationStatus.FAILED_INVALID_GAME;
         }
 
         boolean isAuthorized = playerAuthorizer.isPlayerAuthorized(game, move, player);

@@ -5,6 +5,8 @@ import com.crushedlemon.chess.dto.GetMoveResultInput;
 import com.crushedlemon.chess.dto.GetMoveResultOutput;
 import com.crushedlemon.chess.dto.PlayMoveInput;
 import com.crushedlemon.chess.dto.PlayMoveOutput;
+import com.crushedlemon.chess.engine.validator.MoveValidator;
+import com.crushedlemon.chess.engine.validator.classic.ValidatorFactory;
 import com.crushedlemon.chess.enums.MoveResult;
 import com.crushedlemon.chess.exception.InvalidMoveException;
 import lombok.AllArgsConstructor;
@@ -37,7 +39,7 @@ public class ClassicRuleEngine implements RuleEngine {
         String endingSquare = move.getEndingSquare();
 
         assertPieceExistsAtPosition(input.getBoard(), movedPiece, startingSquare);
-        assertValidityOfMove();
+        assertValidityOfMove(input.getBoard(), input.getMove());
 
         Board newBoard = input.getBoard().getNewBoardByPlayingMove(move);
 
@@ -52,8 +54,13 @@ public class ClassicRuleEngine implements RuleEngine {
         return new GetMoveResultOutput(List.of(MoveResult.NOTHING));
     }
 
-    private void assertValidityOfMove() {
-        // TODO : Make sure that the move is valid
+    private void assertValidityOfMove(Board board, Move move) {
+        Piece piece = board.getPieceAt(move.getStartingSquare());
+        MoveValidator moveValidator = ValidatorFactory.getMoveValidatorForPiece(piece);
+        if(!moveValidator.isMoveValid(board, move)) {
+            throw new InvalidMoveException(
+                    String.format("Piece %s not allowed to move from %s to %s", piece, move.getStartingSquare(), move.getEndingSquare()));
+        }
     }
 
     private boolean isCastleAllowed(Integer flags, Color color, CastleSide castleSide) {

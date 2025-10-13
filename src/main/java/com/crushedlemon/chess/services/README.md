@@ -7,7 +7,6 @@
             <li> The player has moved their own piece </li>
         </ol>
     </li>
-    <li> Try to play the move </li>
     <li>Try to play the move
         <ol>
             <li>Validate the move
