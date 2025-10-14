@@ -16,10 +16,10 @@ public class CompositeMovementRule implements ClassicMovementRule {
     @Override
     public boolean isPieceMovementAllowed(Board board, Move move) {
         for(ClassicMovementRule movementRule : movementRules) {
-            if(!movementRule.isPieceMovementAllowed(board, move)) {
-                return false;
+            if(movementRule.isPieceMovementAllowed(board, move)) {
+                return true;
             }
         }
-        return true;
+        return false;
     }
 }

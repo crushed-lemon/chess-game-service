@@ -14,14 +14,15 @@ public class MessageUtils {
 
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
-    public static String getMoveMessage(Move move, String playerId) {
+    public static String getMoveMessage(Move move, String playerId, String nextPlayer) {
         try {
             return objectMapper.writeValueAsString(Map.of(
                     "action", "MOVE_SUCCESS",
                     "source", move.getStartingSquare(),
                     "destination", move.getEndingSquare(),
                     "piece", move.getMovedPiece().toString(),
-                    "playerId", playerId
+                    "playerId", playerId,
+                    "nextPlayer", nextPlayer
             ));
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);

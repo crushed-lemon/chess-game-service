@@ -16,9 +16,9 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.BiConsumer;
 import java.util.function.Function;
 
+import static com.crushedlemon.chess.utils.CommonUtils.getColorForUser;
 import static com.crushedlemon.chess.utils.CommonUtils.opponentOf;
 import static com.crushedlemon.chess.utils.CommsUtil.communicateToClient;
 import static com.crushedlemon.chess.utils.MessageUtils.*;
@@ -43,14 +43,13 @@ public class ChessGameController {
 
         log.info("{} wants to play {} in game {}", playerId, move, gameId);
 
-        String message = getMoveMessage(move, playerId);
-
         return handleAction(
                 playerId,
                 gameId,
-                message,
                 (game) -> chessService.playMove(game, move, playerId),
-                (selfConn, opponentConn) -> sendSuccessMessage(selfConn, opponentConn, message));
+                (selfConn, opponentConn, nextPlayer) -> sendSuccessMessage(selfConn, opponentConn, getMoveMessage(move, playerId, nextPlayer)),
+                (nextPlayer) -> getMoveMessage(move, playerId, nextPlayer)
+        );
     }
 
     @PostMapping("/resign")
@@ -63,22 +62,21 @@ public class ChessGameController {
 
         log.info("{} wants to resign from {}", playerId, gameId);
 
-        String message = getResignationMessage(playerId);
-
         return handleAction(
                 playerId,
                 gameId,
-                message,
                 (game) -> chessService.resign(game, playerId),
-                (selfConn, opponentConn) -> sendSuccessMessage(selfConn, opponentConn, message));
+                (selfConn, opponentConn, unused) -> sendSuccessMessage(selfConn, opponentConn, getResignationMessage(playerId)),
+                (unused) -> getResignationMessage(playerId)
+        );
     }
 
     private ResponseEntity<String> handleAction(
             String playerId,
             String gameId,
-            String message,
             Function<Game, List<GameError>> action,
-            BiConsumer<Optional<String>, Optional<String>> successCommunicator) {
+            TriConsumer<Optional<String>, Optional<String>, String> successCommunicator,
+            Function<String, String> messageFunction) {
         Optional<Game> game = chessService.getOngoingGame(gameId);
         Optional<String> connectionId = chessService.getConnectionId(playerId);
 
@@ -95,8 +93,9 @@ public class ChessGameController {
         } else {
             String opponent = opponentOf(playerId, game.get());
             Optional<String> opponentConnectionId = chessService.getConnectionId(opponent);
-            successCommunicator.accept(connectionId, opponentConnectionId);
-            return ResponseEntity.ok(message);
+            String opponentColor = getColorForUser(opponent, game.get()).substring(0, 1);
+            successCommunicator.accept(connectionId, opponentConnectionId, opponentColor);
+            return ResponseEntity.ok(messageFunction.apply(opponentColor));
         }
     }
 
@@ -107,5 +106,17 @@ public class ChessGameController {
     private void sendSuccessMessage(Optional<String> connectionId, Optional<String> opponentConnectionId, String message) {
         connectionId.ifPresent(s -> communicateToClient(s, message));
         opponentConnectionId.ifPresent(s -> communicateToClient(s, message));
+    }
+
+    @FunctionalInterface
+    public interface TriConsumer<T, U, V> {
+        void accept(T t, U u, V v);
+
+        default TriConsumer<T, U, V> andThen(TriConsumer<? super T, ? super U, ? super V> after) {
+            return (t, u, v) -> {
+                accept(t, u, v);
+                after.accept(t, u, v);
+            };
+        }
     }
 }

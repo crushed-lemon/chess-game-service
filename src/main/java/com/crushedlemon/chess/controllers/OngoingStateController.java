@@ -14,6 +14,8 @@ import com.google.gson.JsonObject;
 
 import java.util.Optional;
 
+import static com.crushedlemon.chess.utils.CommonUtils.getColorForUser;
+
 @RestController
 @Slf4j
 public class OngoingStateController {
@@ -67,13 +69,5 @@ public class OngoingStateController {
         response.addProperty("currentPlayer", game.get().getCurrentPlayer() == 0 ? "W" : "B");
 
         return ResponseEntity.ok(response.toString());
-    }
-
-    private String getColorForUser(String username, Game game) {
-        if(game.getWhitePlayerId().equals(username)) {
-            return "WHITE";
-        } else {
-            return "BLACK";
-        }
     }
 }

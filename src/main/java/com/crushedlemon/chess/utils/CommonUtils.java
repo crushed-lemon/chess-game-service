@@ -31,6 +31,14 @@ public class CommonUtils {
         return pc.toLowerCase().equals(pc) ? Color.B : Color.W;
     }
 
+    public static String getColorForUser(String username, Game game) {
+        if(game.getWhitePlayerId().equals(username)) {
+            return "WHITE";
+        } else {
+            return "BLACK";
+        }
+    }
+
     public static String opponentOf(String userName, Game game) {
         return game.getBlackPlayerId().equals(userName) ? game.getWhitePlayerId() : game.getBlackPlayerId();
     }
