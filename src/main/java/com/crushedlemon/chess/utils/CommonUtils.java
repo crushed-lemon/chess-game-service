@@ -1,5 +1,6 @@
 package com.crushedlemon.chess.utils;
 
+import com.crushedlemon.chess.commons.model.Color;
 import com.crushedlemon.chess.commons.model.Game;
 import com.crushedlemon.chess.commons.model.Piece;
 
@@ -23,6 +24,11 @@ public class CommonUtils {
 
     public static int getRank(String position) {
         return position.charAt(1) - '0';
+    }
+
+    public static Color getColor(Piece piece) {
+        String pc = piece.toString();
+        return pc.toLowerCase().equals(pc) ? Color.B : Color.W;
     }
 
     public static String opponentOf(String userName, Game game) {

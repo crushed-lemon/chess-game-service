@@ -14,8 +14,7 @@ public class ValidatorFactory {
             "r", RookValidator.getInstance(),
             "q", QueenValidator.getInstance(),
             "k", KingValidator.getInstance(),
-
-            "p", BlankValidator.getInstance()
+            "p", PawnValidator.getInstance()
     );
 
     public static MoveValidator getMoveValidatorForPiece(Piece piece) {

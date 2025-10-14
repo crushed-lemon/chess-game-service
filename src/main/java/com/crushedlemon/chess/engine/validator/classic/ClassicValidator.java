@@ -7,6 +7,8 @@ import com.crushedlemon.chess.commons.model.Piece;
 import com.crushedlemon.chess.engine.movementRule.classic.ClassicMovementRule;
 import com.crushedlemon.chess.engine.validator.MoveValidator;
 
+import static com.crushedlemon.chess.utils.CommonUtils.getColor;
+
 abstract public class ClassicValidator implements MoveValidator {
 
     private final ClassicMovementRule classicMovementRule;
@@ -48,10 +50,5 @@ abstract public class ClassicValidator implements MoveValidator {
     private boolean isKingChecked(Color ownColor, Board newBoardByPlayingMove) {
         // TODO : implement to check if king is under check
         return false;
-    }
-
-    private Color getColor(Piece piece) {
-        String pc = piece.toString();
-        return pc.toLowerCase().equals(pc) ? Color.B : Color.W;
     }
 }
