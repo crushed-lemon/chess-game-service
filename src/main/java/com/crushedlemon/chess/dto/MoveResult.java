@@ -1,4 +1,4 @@
-package com.crushedlemon.chess.enums;
+package com.crushedlemon.chess.dto;
 
 public enum MoveResult {
     NOTHING,

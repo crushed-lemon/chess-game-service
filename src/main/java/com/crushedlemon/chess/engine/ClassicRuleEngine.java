@@ -7,7 +7,7 @@ import com.crushedlemon.chess.dto.PlayMoveInput;
 import com.crushedlemon.chess.dto.PlayMoveOutput;
 import com.crushedlemon.chess.engine.validator.MoveValidator;
 import com.crushedlemon.chess.engine.validator.classic.ValidatorFactory;
-import com.crushedlemon.chess.enums.MoveResult;
+import com.crushedlemon.chess.dto.MoveResult;
 import com.crushedlemon.chess.exception.InvalidMoveException;
 import lombok.AllArgsConstructor;
 

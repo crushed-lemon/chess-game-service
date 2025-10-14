@@ -3,27 +3,32 @@ package com.crushedlemon.chess.validators;
 import com.crushedlemon.chess.commons.model.Color;
 import com.crushedlemon.chess.commons.model.Game;
 import com.crushedlemon.chess.commons.model.Move;
+import com.crushedlemon.chess.dto.error.GameError;
 import org.springframework.stereotype.Component;
+
+import java.util.Optional;
+
+import static com.crushedlemon.chess.dto.error.GameErrorFactory.*;
 
 @Component
 public class PlayerAuthorizer {
 
-    public boolean isPlayerAuthorized(Game game, Move move, String player) {
-        /*
-        Authorize the move
-            a) The player is playing the game, and it is their turn
-            b) The player has moved their own piece
-        */
+    public Optional<GameError> isPlayerAuthorized(Game game, Move move, String player) {
+
+        if(!game.getWhitePlayerId().equals(player) && !game.getBlackPlayerId().equals(player)) {
+            return Optional.of(errorUnauthorizedNotInGame(player, game.getGameId()));
+        }
+
         Color currentColor = getCurrentColor(game);
         String currentPlayer = getCurrentPlayer(game, currentColor);
         if(!player.equals(currentPlayer)) {
-            return false;
+            return Optional.of(errorUnauthorizedNotCurrentPlayer(player, game.getGameId(), currentPlayer));
         }
         Color movedPieceColor = getMovedPieceColor(move);
         if(!movedPieceColor.equals(currentColor)) {
-            return false;
+            return Optional.of(errorUnauthorizedIncorrectColor(player, game.getGameId(), currentColor, movedPieceColor));
         }
-        return true;
+        return Optional.empty();
     }
 
     private static Color getMovedPieceColor(Move move) {

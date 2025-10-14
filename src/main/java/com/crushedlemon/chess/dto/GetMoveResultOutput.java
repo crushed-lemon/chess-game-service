@@ -1,6 +1,5 @@
 package com.crushedlemon.chess.dto;
 
-import com.crushedlemon.chess.enums.MoveResult;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 

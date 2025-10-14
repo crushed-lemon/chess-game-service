@@ -3,19 +3,22 @@ package com.crushedlemon.chess.services;
 import com.crushedlemon.chess.commons.model.Game;
 import com.crushedlemon.chess.commons.model.GamePreferences;
 import com.crushedlemon.chess.commons.model.Move;
-import com.crushedlemon.chess.enums.OperationStatus;
+import com.crushedlemon.chess.dto.error.GameError;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface ChessService {
 
-    OperationStatus playMove(String gameId, Move move, String player);
+    List<GameError> playMove(Game game, Move move, String player);
 
     Optional<Game> getOngoingGame(String gameId);
 
-    void resign(String gameId, String userName);
+    List<GameError> resign(Game game, String userName);
 
     Optional<GamePreferences> getOngoingLobbyRequest(String userName);
 
     Optional<String> getOngoingGameId(String userName);
+
+    Optional<String> getConnectionId(String playerId);
 }
