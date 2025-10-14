@@ -1,4 +1,4 @@
-package com.crushedlemon.chess.validators;
+package com.crushedlemon.chess.auth;
 
 import com.crushedlemon.chess.commons.model.Color;
 import com.crushedlemon.chess.commons.model.Game;
@@ -9,6 +9,7 @@ import org.springframework.stereotype.Component;
 import java.util.Optional;
 
 import static com.crushedlemon.chess.dto.error.GameErrorFactory.*;
+import static com.crushedlemon.chess.utils.CommonUtils.getCurrentColor;
 
 @Component
 public class PlayerAuthorizer {
@@ -38,9 +39,5 @@ public class PlayerAuthorizer {
 
     private static String getCurrentPlayer(Game game, Color currentColor) {
         return currentColor.equals(Color.B) ? game.getBlackPlayerId() : game.getWhitePlayerId();
-    }
-
-    private static Color getCurrentColor(Game game) {
-        return game.getCurrentPlayer() == 0 ? Color.B : Color.W;
     }
 }

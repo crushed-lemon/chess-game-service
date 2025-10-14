@@ -39,6 +39,10 @@ public class CommonUtils {
         }
     }
 
+    public static Color getCurrentColor(Game game) {
+        return game.getCurrentPlayer() == 0 ? Color.B : Color.W;
+    }
+
     public static String opponentOf(String userName, Game game) {
         return game.getBlackPlayerId().equals(userName) ? game.getWhitePlayerId() : game.getBlackPlayerId();
     }

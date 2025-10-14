@@ -8,7 +8,7 @@ import com.crushedlemon.chess.engine.RuleEngine;
 import com.crushedlemon.chess.engine.RuleEngineFactory;
 import com.crushedlemon.chess.exception.InvalidMoveException;
 import com.crushedlemon.chess.repositories.ChessRepository;
-import com.crushedlemon.chess.validators.PlayerAuthorizer;
+import com.crushedlemon.chess.auth.PlayerAuthorizer;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
