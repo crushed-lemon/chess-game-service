@@ -40,7 +40,7 @@ public class ChessServiceImpl implements ChessService {
 
         // Go through README in this package to know the steps to take per move
 
-        log.info("Move played in game {} by {} : {}", game.getGameId(), player, move);
+        log.info("Move played in game id {} by {} : {}", game.getGameId(), player, move);
 
         Optional<GameError> authError = playerAuthorizer.isPlayerAuthorized(game, move, player);
         if (authError.isPresent()) {
